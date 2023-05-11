@@ -73,7 +73,6 @@ def scrape(movie_url, ImdbId, all_data):
     r = requests.get(url=movie_url)
     soup = BeautifulSoup(r.text, 'html.parser')
 
-    all_data = []
     data = scrape_reviews(soup, ImdbId)
     all_data.extend(data)
 
