@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import numpy as np
 
 
 def get_reviews(id, max_pages=50):
@@ -99,7 +100,7 @@ def scrape_reviews(page, reviews):
             review_imdb['rating_value'] = review.find(
                 'span', {'class': 'rating-other-user-rating'}).find('span').get_text().strip()
         except:
-            review_imdb['rating_value'] = "NA"  # Failed to get any output
+            review_imdb['rating_value'] = np.nan  # Failed to get any output
 
         # Add the review to the reviews array.
         reviews.append(review_imdb)
