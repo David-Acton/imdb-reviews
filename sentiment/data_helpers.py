@@ -31,9 +31,11 @@ def load_data_and_labels():
     Returns split sentences and labels.
     """
     # Load data from files
-    positive_examples = list(open("good_reviews.txt", "r", encoding='latin-1').readlines())
+    positive_examples = list(
+        open("good_reviews.txt", "r", encoding='latin-1').readlines())
     positive_examples = [s.strip() for s in positive_examples]
-    negative_examples = list(open("bad_reviews.txt", "r", encoding='latin-1').readlines())
+    negative_examples = list(
+        open("bad_reviews.txt", "r", encoding='latin-1').readlines())
     negative_examples = [s.strip() for s in negative_examples]
 
     # Split by words
@@ -83,7 +85,8 @@ def build_input_data(sentences, labels, vocabulary):
     """
     Maps sentences and labels to vectors based on a vocabulary.
     """
-    x = np.array([[vocabulary[word] for word in sentence] for sentence in sentences])
+    x = np.array([[vocabulary[word] for word in sentence]
+                 for sentence in sentences])
     y = np.array(labels)
     return [x, y]
 
@@ -99,3 +102,19 @@ def load_data():
     vocabulary, vocabulary_inv = build_vocab(sentences_padded)
     x, y = build_input_data(sentences_padded, labels, vocabulary)
     return [x, y, vocabulary, vocabulary_inv]
+
+
+def prepare_sentence(sentence, padding_word="<PAD/>"):
+    """
+    Preprocesses the given sentence for model prediction.
+    Returns input vectors for prediction.
+    """
+    # Load and preprocess data
+    pre_sentences, labels = load_data_and_labels()
+    padding_length = max(len(x) for x in pre_sentences)
+    sentence = clean_str(sentence).split(" ")
+    num_padding = padding_length - len(sentence)
+    new_sentence = sentence + [padding_word] * num_padding
+    vocabulary, vocabulary_inv = build_vocab(new_sentence)
+    x, _ = build_input_data(new_sentence, labels, vocabulary)
+    return x

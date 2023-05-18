@@ -51,9 +51,10 @@ output = layers.Dense(units=2, activation='softmax')(dropout)
 # this creates a model that includes
 model = keras.Model(inputs=inputs, outputs=output)
 
-checkpoint = callbacks.ModelCheckpoint('weights.{epoch:03d}-{val_acc:.4f}.hdf5',
-                             monitor='val_acc', verbose=1, save_best_only=True, mode='auto')
-adam = optimizers.Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+checkpoint = callbacks.ModelCheckpoint('weights.{epoch:03d}-{val_accuracy:.4f}.hdf5',
+                                       monitor='val_accuracy', verbose=1, save_best_only=True, mode='auto')
+adam = optimizers.Adam(learning_rate=1e-4, beta_1=0.9,
+                       beta_2=0.999, epsilon=1e-08)
 
 model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
 print("Training Model...")
