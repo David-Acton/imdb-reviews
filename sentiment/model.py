@@ -2,17 +2,33 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import optimizers
 from tensorflow.keras import callbacks
+from tensorflow.keras.preprocessing import text, sequence
 from sklearn.model_selection import train_test_split
-from data_helpers import load_data
+import numpy as np
 
+with open("good_reviews.txt", "r") as file:
+    good_text = file.read().splitlines()
+
+with open("bad_reviews.txt", "r") as file:
+    bad_text = file.read().splitlines()
+
+texts = good_text + bad_text
+positive_labels = [[0, 1] for _ in good_text]
+negative_labels = [[1, 0] for _ in bad_text]
+y = np.concatenate([positive_labels, negative_labels], 0)
+
+tokenizer = text.Tokenizer()
+tokenizer.fit_on_texts(texts)
+sequences = tokenizer.texts_to_sequences(texts)
+
+max_sequence_length = max(len(seq) for seq in sequences)
+x = sequence.pad_sequences(sequences, maxlen=max_sequence_length)
 
 print('Loading data')
-x, y, vocabulary, vocabulary_inv = load_data()
 X_train, X_test, y_train, y_test = train_test_split(
     x, y, test_size=0.2, random_state=42)
 
-sequence_length = x.shape[1]  # 56
-vocabulary_size = len(vocabulary_inv)  # 18765
+vocabulary_size = len(tokenizer.word_index) + 1
 embedding_dim = 256
 filter_sizes = [3, 4, 5]
 num_filters = 512
@@ -21,12 +37,11 @@ drop = 0.5
 epochs = 100
 batch_size = 30
 
-# this returns a tensor
 print("Creating Model...")
-inputs = keras.Input(shape=(sequence_length,), dtype='int32')
+inputs = keras.Input(shape=(max_sequence_length,), dtype='int32')
 embedding = layers.Embedding(
-    input_dim=vocabulary_size, output_dim=embedding_dim, input_length=sequence_length)(inputs)
-reshape = layers.Reshape((sequence_length, embedding_dim, 1))(embedding)
+    input_dim=vocabulary_size, output_dim=embedding_dim, input_length=vocabulary_size)(inputs)
+reshape = layers.Reshape((max_sequence_length, embedding_dim, 1))(embedding)
 
 conv_0 = layers.Conv2D(num_filters, kernel_size=(
     filter_sizes[0], embedding_dim), padding='valid', kernel_initializer='normal', activation='relu')(reshape)
@@ -36,11 +51,11 @@ conv_2 = layers.Conv2D(num_filters, kernel_size=(
     filter_sizes[2], embedding_dim), padding='valid', kernel_initializer='normal', activation='relu')(reshape)
 
 maxpool_0 = layers.MaxPool2D(pool_size=(
-    sequence_length - filter_sizes[0] + 1, 1), strides=(1, 1), padding='valid')(conv_0)
+    max_sequence_length - filter_sizes[0] + 1, 1), strides=(1, 1), padding='valid')(conv_0)
 maxpool_1 = layers.MaxPool2D(pool_size=(
-    sequence_length - filter_sizes[1] + 1, 1), strides=(1, 1), padding='valid')(conv_1)
+    max_sequence_length - filter_sizes[1] + 1, 1), strides=(1, 1), padding='valid')(conv_1)
 maxpool_2 = layers.MaxPool2D(pool_size=(
-    sequence_length - filter_sizes[2] + 1, 1), strides=(1, 1), padding='valid')(conv_2)
+    max_sequence_length - filter_sizes[2] + 1, 1), strides=(1, 1), padding='valid')(conv_2)
 
 concatenated_tensor = layers.Concatenate(
     axis=1)([maxpool_0, maxpool_1, maxpool_2])
